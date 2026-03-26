@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package auth;
+
+service AuthService {
+  // 微信登录
+  rpc WechatLogin(WechatLoginRequest) returns (LoginResponse);
+
+  // 手机号登录
+  rpc PhoneLogin(PhoneLoginRequest) returns (LoginResponse);
+
+  // 发送验证码
+  rpc SendSmsCode(SendSmsCodeRequest) returns (SendSmsCodeResponse);
+
+  // 刷新授权
+  rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
+}
+
+message WechatLoginRequest {
+  string code = 1; // 微信code
+}
+
+message PhoneLoginRequest {
+  string phone = 1;
+  string code = 2;
+}
+
+message SendSmsCodeRequest {
+  string phone = 1;
+}
+
+message SendSmsCodeResponse {
+  bool success = 1;
+}
+
+message LoginResponse {
+  string user_id = 1;
+  string access_token = 2;
+  int64 expires_in = 3;
+  string refresh_token = 4;
+
+  bool is_new_user = 5;
+}

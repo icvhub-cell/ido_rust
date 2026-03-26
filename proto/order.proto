@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package order;
+
+import "common.proto";
+
+service OrderService {
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
+  rpc GetOrder(GetOrderRequest) returns (Order);
+  rpc ListOrders(ListOrdersRequest) returns (OrderList);
+}
+
+enum OrderStatus {
+  ORDER_UNKNOWN = 0;
+  CREATED = 1;
+  PAID = 2;
+  PRINTING = 3;
+  SHIPPED = 4;
+  DONE = 5;
+  CLOSED = 6;
+  REFUNDED = 7;
+}
+
+message CreateOrderRequest {
+  string user_id = 1;
+
+  repeated string image_urls = 2;
+
+  string layout_type = 3;
+  string frame_type = 4;
+
+  string address_id = 5;
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+}
+
+message ListOrdersRequest {
+  string user_id = 1;
+  common.PageRequest page = 2;
+}
+
+message Order {
+  string order_id = 1;
+  string user_id = 2;
+
+  repeated string image_urls = 3;
+
+  int64 total_amount = 4;
+  int64 paid_amount = 5;
+
+  OrderStatus status = 6;
+
+  string layout_type = 7;
+  string frame_type = 8;
+
+  string address_id = 9;
+
+  string logistics_no = 10;
+
+  int64 created_at = 11;
+  int64 updated_at = 12;
+}
+
+message OrderList {
+  repeated Order list = 1;
+  common.PageResponse page = 2;
+}

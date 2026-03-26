@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package user;
+
+service UserService {
+  // 获取用户信息
+  rpc GetProfile(GetProfileRequest) returns (UserProfile);
+
+  // 修改用户信息
+  rpc UpdateProfile(UpdateProfileRequest) returns (UserProfile);
+
+  // 新建地址
+  rpc AddAddress(AddAddressRequest) returns (Address);
+
+  // 修改地址
+  rpc ListAddress(ListAddressRequest) returns (AddressList);
+}
+
+message GetProfileRequest {
+  string user_id = 1;
+}
+
+message UpdateProfileRequest {
+  string user_id = 1;
+  string avatar = 2;
+  string nickname = 3;
+}
+
+message UserProfile {
+  string user_id = 1;
+  string avatar = 2;
+  string nickname = 3;
+  string phone = 4;
+}
+
+message Address {
+  string id = 1;
+  string user_id = 2;
+  string name = 3;
+  string phone = 4;
+  string detail = 5;
+  bool is_default = 6;
+}
+
+message AddAddressRequest {
+  string user_id = 1;
+  string name = 2;
+  string phone = 3;
+  string detail = 4;
+}
+
+message ListAddressRequest {
+  string user_id = 1;
+}
+
+message AddressList {
+  repeated Address list = 1;
+}

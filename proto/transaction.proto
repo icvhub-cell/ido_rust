@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package transaction;
+
+import "common.proto";
+
+service TransactionService {
+
+  // 发起支付
+  rpc CreateTransaction(CreateTransactionRequest) returns (Transaction);
+
+  // 查询交易
+  rpc GetTransaction(GetTransactionRequest) returns (Transaction);
+
+  // 查询订单交易列表
+  rpc ListByOrder(ListByOrderRequest) returns (TransactionList);
+
+  // 支付回调（给支付网关调用）
+  rpc PaymentCallback(PaymentCallbackRequest) returns (common.Empty);
+}
+
+enum TransactionType {
+  TRANS_UNKNOWN = 0;
+  PAY = 1;
+  REFUND = 2;
+}
+
+enum TransactionStatus {
+  TRANS_INIT = 0;
+  TRANS_SUCCESS = 1;
+  TRANS_FAILED = 2;
+}
+
+message CreateTransactionRequest {
+  string order_id = 1;
+  string user_id = 2;
+
+  int64 amount = 3;
+
+  string channel = 4; // WECHAT / ALIPAY
+}
+
+message GetTransactionRequest {
+  string transaction_id = 1;
+}
+
+message ListByOrderRequest {
+  string order_id = 1;
+}
+
+message Transaction {
+  string transaction_id = 1;
+
+  string order_id = 2;
+  string user_id = 3;
+
+  TransactionType type = 4;
+
+  string channel = 5;
+
+  int64 amount = 6;
+
+  TransactionStatus status = 7;
+
+  string third_party_no = 8;
+
+  string currency = 9;
+
+  string reason = 10;
+
+  int64 created_at = 11;
+}
+
+message TransactionList {
+  repeated Transaction list = 1;
+}
