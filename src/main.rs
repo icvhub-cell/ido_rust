@@ -1,41 +1,77 @@
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::transport::Server;
 
-pub mod hello {
-    tonic::include_proto!("hello");
-}
-
-use hello::greeter_server::{Greeter, GreeterServer};
-use hello::{HelloReply, HelloRequest};
-
-#[derive(Default)]
-pub struct MyGreeter;
-
-#[tonic::async_trait]
-impl Greeter for MyGreeter {
-    async fn say_hello(
-        &self,
-        request: Request<HelloRequest>,
-    ) -> Result<Response<HelloReply>, Status> {
-        let name = request.into_inner().name;
-
-        println!("request: {}", name);
-
-        let reply = HelloReply {
-            message: format!("Hello {}", name),
-        };
-
-        Ok(Response::new(reply))
-    }
-}
+mod pb;
+mod config;
+mod domain;
+mod infrastructure;
+mod interface;
+mod middleware;
+mod service;
+use config::configuration::load_config;
+use infrastructure::cache::redis::RedisRepo;
+use std::net::SocketAddr;
+use std::sync::Arc;
+use tonic_health::server::health_reporter;
+use crate::pb::order::order_service_server::OrderServiceServer;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "0.0.0.0:50051".parse()?;
+    let settings = load_config();
+    let redis_url = if settings.redis.password.is_empty() {
+        format!("redis://{}:{}", settings.redis.host, settings.redis.port)
+    } else {
+        format!(
+            "redis://:{}@{}:{}",
+            settings.redis.password, settings.redis.host, settings.redis.port
+        )
+    };
+    RedisRepo::init_global(&redis_url)?;
 
-    println!("gRPC server listening on {}", addr);
+    let addr: SocketAddr = format!(
+        "{}:{}",
+        settings.server.host,
+        settings.server.port
+    )
+    .parse()?;
+
+    println!("🚀 Server running on {}", addr);
+
+    let (_health_reporter, health_service) = health_reporter();
+
+    let mysql_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        if settings.mysql.password.is_empty() {
+            format!(
+                "mysql://{}@{}:{}/{}",
+                settings.mysql.username,
+                settings.mysql.host,
+                settings.mysql.port,
+                settings.mysql.database
+            )
+        } else {
+            format!(
+                "mysql://{}:{}@{}:{}/{}",
+                settings.mysql.username,
+                settings.mysql.password,
+                settings.mysql.host,
+                settings.mysql.port,
+                settings.mysql.database
+            )
+        }
+    });
+
+    let mysql_pool = infrastructure::db::mysql::init_db_pool(&mysql_url).await?;
+    let order_repo = Arc::new(
+        infrastructure::repository::order_repository::MySqlOrderRepository::new(mysql_pool),
+    );
+    let order_svc = service::order_service::OrderServiceImpl::new(order_repo);
+    let order_controller = interface::grpc::order_handler::OrderController::new(order_svc);
 
     Server::builder()
-        .add_service(GreeterServer::new(MyGreeter::default()))
+        .add_service(health_service)
+        .add_service(OrderServiceServer::with_interceptor(
+            order_controller,
+            middleware::auth::auth_interceptor,
+        ))
         .serve(addr)
         .await?;
 

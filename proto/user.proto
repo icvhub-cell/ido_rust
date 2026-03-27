@@ -13,6 +13,9 @@ service UserService {
   rpc AddAddress(AddAddressRequest) returns (Address);
 
   // 修改地址
+  rpc UpdateAddress(AddAddressRequest) returns (Address);
+
+  // 获取地址
   rpc ListAddress(ListAddressRequest) returns (AddressList);
 }
 

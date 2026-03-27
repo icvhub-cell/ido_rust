@@ -74,3 +74,7 @@ message Transaction {
 message TransactionList {
   repeated Transaction list = 1;
 }
+
+message PaymentCallbackRequest {
+  repeated Transaction list = 1;
+}

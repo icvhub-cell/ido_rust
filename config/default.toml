@@ -1,0 +1,15 @@
+[server]
+host = "0.0.0.0"
+port = 50050
+
+[mysql]
+host = "10.99.64.82"
+port = 8006
+username = "mingchuan"
+password = "mingchuan@2025"
+database = "ido"
+
+[redis]
+host = "10.118.153.13"
+port = 6379
+password = "gz_9*nhXZ8w2vmGA"
